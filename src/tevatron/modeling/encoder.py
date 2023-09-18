@@ -191,13 +191,16 @@ class EncoderModel(nn.Module):
         else:
             pooler = None
 
+
+        sim = {"cos": cos_sim, "cos_sim": cos_sim, "dot": None, "dot_score": None}
         model = cls(
             lm_q=lm_q,
             lm_p=lm_p,
             pooler=pooler,
             negatives_x_device=train_args.negatives_x_device,
             untie_encoder=model_args.untie_encoder,
-            temperature=train_args.temperature
+            temperature=train_args.temperature,
+            similarity_fct=sim[train_args.similarity]
         )
         return model
 
