@@ -15,6 +15,8 @@ from tevatron.arguments import ModelArguments, \
 
 import logging
 
+from tevatron.utils.similarity import cos_sim
+
 logger = logging.getLogger(__name__)
 
 
@@ -59,7 +61,9 @@ class EncoderModel(nn.Module):
                  lm_p: PreTrainedModel,
                  pooler: nn.Module = None,
                  untie_encoder: bool = False,
-                 negatives_x_device: bool = False
+                 negatives_x_device: bool = False,
+                 temperature: float = 1.0,
+                 similarity_fct=cos_sim
                  ):
         super().__init__()
         self.lm_q = lm_q
@@ -68,6 +72,8 @@ class EncoderModel(nn.Module):
         self.cross_entropy = nn.CrossEntropyLoss(reduction='mean')
         self.negatives_x_device = negatives_x_device
         self.untie_encoder = untie_encoder
+        self.temperature = temperature
+        self.similarity_fct = similarity_fct
         if self.negatives_x_device:
             if not dist.is_initialized():
                 raise ValueError('Distributed training has not been initialized for representation all gather.')
@@ -93,6 +99,7 @@ class EncoderModel(nn.Module):
 
             scores = self.compute_similarity(q_reps, p_reps)
             scores = scores.view(q_reps.size(0), -1)
+            scores = scores / self.temperature
 
             target = torch.arange(scores.size(0), device=scores.device, dtype=torch.long)
             target = target * (p_reps.size(0) // q_reps.size(0))
@@ -126,6 +133,8 @@ class EncoderModel(nn.Module):
         raise NotImplementedError('EncoderModel is an abstract class')
 
     def compute_similarity(self, q_reps, p_reps):
+        if self.similarity_fct is not None:
+            return self.similarity_fct(q_reps, p_reps)
         return torch.matmul(q_reps, p_reps.transpose(0, 1))
 
     def compute_loss(self, scores, target):
@@ -187,7 +196,8 @@ class EncoderModel(nn.Module):
             lm_p=lm_p,
             pooler=pooler,
             negatives_x_device=train_args.negatives_x_device,
-            untie_encoder=model_args.untie_encoder
+            untie_encoder=model_args.untie_encoder,
+            temperature=train_args.temperature
         )
         return model
 

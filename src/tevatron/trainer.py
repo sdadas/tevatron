@@ -93,7 +93,7 @@ class GCTrainer(TevatronTrainer):
         super(GCTrainer, self).__init__(*args, **kwargs)
 
         loss_fn_cls = DistributedContrastiveLoss if self.args.negatives_x_device else SimpleContrastiveLoss
-        loss_fn = loss_fn_cls()
+        loss_fn = loss_fn_cls(self.args.temperature)
 
         self.gc = GradCache(
             models=[self.model, self.model],

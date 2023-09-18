@@ -114,6 +114,7 @@ class DataArguments:
 @dataclass
 class TevatronTrainingArguments(TrainingArguments):
     warmup_ratio: float = field(default=0.1)
+    temperature: float = field(default=0.05)
     negatives_x_device: bool = field(default=False, metadata={"help": "share negatives across devices"})
     do_encode: bool = field(default=False, metadata={"help": "run the encoding loop"})
 
