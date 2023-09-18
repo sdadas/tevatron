@@ -53,11 +53,12 @@ class TrainDataset(Dataset):
         encoded_query = self.create_one_example(qry, is_query=True)
 
         encoded_passages = []
-        group_positives = group['positives']
-        group_negatives = group['negatives']
+        group_positives: List = group['positives']
+        group_negatives: List = group['negatives']
 
         if self.data_args.positive_passage_no_shuffle:
-            pos_psg = group_positives[0]
+            idx = epoch % len(group_positives)
+            pos_psg = group_positives[idx]
         else:
             pos_psg = group_positives[(_hashed_seed + epoch) % len(group_positives)]
         encoded_passages.append(self.create_one_example(pos_psg))
@@ -68,7 +69,11 @@ class TrainDataset(Dataset):
         elif self.data_args.train_n_passages == 1:
             negs = []
         elif self.data_args.negative_passage_no_shuffle:
-            negs = group_negatives[:negative_size]
+            negs = []
+            start_idx = epoch * negative_size
+            for idx in range(negative_size):
+                current_idx = (start_idx + idx) % len(group_negatives)
+                negs.append(group_negatives[current_idx])
         else:
             _offset = epoch * negative_size % len(group_negatives)
             negs = [x for x in group_negatives]
