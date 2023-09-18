@@ -44,6 +44,8 @@ class UniCoilModel(EncoderModel):
         return self._weights_to_vec(qry['input_ids'], q_reps)
 
     def compute_similarity(self, q_reps, p_reps):
+        if self.similarity_fct is not None:
+            return self.similarity_fct(q_reps, p_reps)
         return torch.matmul(q_reps, p_reps.transpose(0, 1))
 
     def _weights_to_vec(self, input_ids, tok_weights):
