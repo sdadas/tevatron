@@ -11,6 +11,9 @@ import torch.distributed as dist
 from .loss import SimpleContrastiveLoss, DistributedContrastiveLoss
 
 import logging
+
+from .utils.similarity import cos_sim
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -92,8 +95,9 @@ class GCTrainer(TevatronTrainer):
                 'Grad Cache package not available. You can obtain it from https://github.com/luyug/GradCache.')
         super(GCTrainer, self).__init__(*args, **kwargs)
 
+        sim = {"cos": cos_sim, "cos_sim": cos_sim, "dot": None, "dot_score": None}
         loss_fn_cls = DistributedContrastiveLoss if self.args.negatives_x_device else SimpleContrastiveLoss
-        loss_fn = loss_fn_cls(self.args.temperature)
+        loss_fn = loss_fn_cls(self.args.temperature, sim[self.args.similarity])
 
         self.gc = GradCache(
             models=[self.model, self.model],
