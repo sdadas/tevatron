@@ -63,7 +63,8 @@ class EncoderModel(nn.Module):
                  untie_encoder: bool = False,
                  negatives_x_device: bool = False,
                  temperature: float = 1.0,
-                 similarity_fct=cos_sim
+                 similarity_fct=cos_sim,
+                 pooling_fct="cls"
                  ):
         super().__init__()
         self.lm_q = lm_q
@@ -74,6 +75,7 @@ class EncoderModel(nn.Module):
         self.untie_encoder = untie_encoder
         self.temperature = temperature
         self.similarity_fct = similarity_fct
+        self.pooling_fct = pooling_fct
         if self.negatives_x_device:
             if not dist.is_initialized():
                 raise ValueError('Distributed training has not been initialized for representation all gather.')

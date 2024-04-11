@@ -31,6 +31,7 @@ class DensePooler(EncoderPooler):
 
 
 class DenseModel(EncoderModel):
+
     def encode_passage(self, psg):
         if psg is None:
             return None
@@ -38,6 +39,8 @@ class DenseModel(EncoderModel):
         p_hidden = psg_out.last_hidden_state
         if self.pooler is not None:
             p_reps = self.pooler(p=p_hidden)  # D * d
+        elif self.pooling_fct in ['mean', 'avg', 'average']:
+            p_reps = p_hidden.sum(dim=1) / psg["attention_mask"].sum(dim=1)[..., None]
         else:
             p_reps = p_hidden[:, 0]
         return p_reps
@@ -49,6 +52,8 @@ class DenseModel(EncoderModel):
         q_hidden = qry_out.last_hidden_state
         if self.pooler is not None:
             q_reps = self.pooler(q=q_hidden)
+        elif self.pooling_fct in ['mean', 'avg', 'average']:
+            q_reps = q_hidden.sum(dim=1) / qry["attention_mask"].sum(dim=1)[..., None]
         else:
             q_reps = q_hidden[:, 0]
         return q_reps
